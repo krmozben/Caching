@@ -11,20 +11,22 @@ namespace RedisExchange.Controllers
     {
         private readonly RedisService _redisService;
         private readonly IDatabase db;
+        private string listKey = "hashList";
 
         public HashTypeController(RedisService redisService)
         {
             _redisService = redisService;
-            db = _redisService.GetDb(0);
+            db = _redisService.GetDb(4);
         }
 
         [HttpGet]
         public async Task<IActionResult> Set()
         {
-            db.StringSet("ziyaretçi", 100);
-            db.StringSet("name", "Kerim Özben");
-            db.StringSet("obje", Encoding.UTF8.GetBytes("keroo"));
-            db.StringSet("success", true);
+            db.HashSet(listKey, 100, 11);
+            db.HashSet(listKey, "test", "value");
+            db.HashSet(listKey, false, true);
+            db.HashSet(listKey, Encoding.UTF8.GetBytes("abc"), Encoding.UTF8.GetBytes("vv"));
+
 
             return Ok();
         }
@@ -32,14 +34,24 @@ namespace RedisExchange.Controllers
         [HttpGet]
         public async Task<IActionResult> Show()
         {
-            db.StringIncrement("ziyaretçi", 1);
-            var result = db.StringGet("name");
+            Dictionary<string, string> lst = new Dictionary<string, string>();
+
+            db.HashGetAll(listKey).ToList().ForEach(x =>
+            {
+                lst.Add(x.Name.ToString(),x.Value.ToString());
+            });
+
+            return Ok(lst);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Remove()
+        {
+            db.HashDelete(listKey, "abc");
+            db.HashDelete(listKey, 100);
 
 
-            if (result.HasValue)
-                return Ok(result.ToString());
-
-            return BadRequest();
+            return Ok();
         }
     }
 }
